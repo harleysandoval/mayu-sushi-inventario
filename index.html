@@ -1,0 +1,230 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inventario diario</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#f3f6fb;--paper:#fff;--ink:#14213d;--muted:#5b6b8a;--line:#c9d4e8;--band:#d6e2f5;--head:#2c4a8a;--headtx:#fff;--accent:#1d4ed8;--danger:#b42318;--ok:#157347;--inbg:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1626;--paper:#152038;--ink:#e6ecf8;--muted:#93a3c4;--line:#2b3b5e;--band:#1f2f52;--head:#274277;--accent:#7aa2ff;--danger:#ff8a80;--ok:#6fdc9c;--inbg:#0f1830;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1626;--paper:#152038;--ink:#e6ecf8;--muted:#93a3c4;--line:#2b3b5e;--band:#1f2f52;--head:#274277;--accent:#7aa2ff;--danger:#ff8a80;--ok:#6fdc9c;--inbg:#0f1830;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.4 "Barlow Semi Condensed",system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:16px 12px 48px}
+h1{font-size:26px;margin:4px 0 14px;font-weight:700}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px}
+label.f{display:flex;flex-direction:column;gap:3px;color:var(--muted);font-size:14px}
+input,textarea{font:inherit;color:var(--ink);background:var(--inbg);border:1px solid var(--line);border-radius:6px;padding:8px}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.wrap{overflow-x:auto;background:var(--paper);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:860px}
+th{background:var(--head);color:var(--headtx);font-weight:600;font-size:14px;padding:8px 6px;text-align:center;position:sticky;top:0}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;z-index:1}
+td{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:0;background:var(--paper)}
+td:first-child{border-left:0;padding:8px 10px;font-weight:600;min-width:130px}
+tr.sec td{background:var(--band);font-weight:700;padding:6px 10px;color:var(--ink)}
+td input{width:100%;border:0;border-radius:0;background:transparent;padding:9px 6px;text-align:center;min-width:64px}
+td input:focus-visible{outline-offset:-2px;background:var(--inbg)}
+td input[type=date]{min-width:136px;font-size:14px}
+td.tot{font-weight:700;text-align:center;font-variant-numeric:tabular-nums;font-size:18px;min-width:70px;color:var(--accent)}
+td.tot.neg{color:var(--danger)}
+td.tot input{color:inherit;font-weight:700;font-size:18px}
+tr[data-manual="1"] td.tot input{text-decoration:underline dotted}
+td.name input{text-align:left;font-weight:600;padding-left:10px}
+.ob{margin-top:14px}.ob textarea{width:100%;min-height:70px;resize:vertical}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+button{font:600 15px inherit;font-family:inherit;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:6px;padding:10px 14px;cursor:pointer}
+button.p{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] button.p,:root:not([data-theme="light"]) button.p{color:#0e1626}
+button.d{color:var(--danger)}
+h2{font-size:20px;margin:28px 0 8px}
+.hist{display:grid;gap:8px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.item small{color:var(--muted);display:block}
+.empty{color:var(--muted)}
+#msg{color:var(--ok);min-height:22px;font-weight:600}
+@media print{.bar,.hist,h2,#hist-title,#msg{display:none}body{background:#fff;color:#000}.wrap{overflow:visible}}
+</style>
+</head>
+<body>
+<main>
+<h1>Inventario diario</h1>
+<div class="meta">
+  <label class="f">Fecha de cuenta<input type="date" id="fecha"></label>
+  <label class="f">Encargado<input type="text" id="enc" placeholder="Nombre del encargado"></label>
+</div>
+<div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+<div class="ob"><label class="f">OB (observaciones)<textarea id="ob"></textarea></label></div>
+<div class="bar">
+  <button class="p" id="save">Guardar registro</button>
+  <button id="new">Nuevo registro</button>
+  <button class="p" id="wa">Enviar PDF por WhatsApp</button>
+  <button id="pdf">Descargar PDF</button>
+  <button id="csv">Exportar CSV</button>
+  <button id="print">Imprimir</button>
+</div>
+<div id="msg" role="status"></div>
+<h2 id="hist-title">Registros guardados</h2>
+<div class="hist" id="hist"></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+var COLS=[["stock","Stock inicial","number"],["fv","Fecha venc.","date"],["ing","Ingresos (paq.)","number"],["paq","Unid. por paquete","number"],["fvi","Fecha venc. ingreso","date"],["lit","Litros","number"],["medio","Medio litro","number"]];
+var SECS=[["Gaseosas",["Inca","Coca","Agua con gas","Agua sin gas"]],["Refrescos",["Maracuyá","Jamaica","Camu camu","Guayaba","Tapariba","Uva regional"]],["Extras",["Stella","",""," "]]];
+var PACK={"Inca":12,"Coca":12,"Agua con gas":15,"Agua sin gas":15,"Stella":6};
+var KEY="inventario:registros",CUR="inventario:borrador";
+var $=function(s){return document.querySelector(s)};
+function msg(t){$("#msg").textContent=t;setTimeout(function(){$("#msg").textContent=""},2500)}
+function load(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+function num(v){var n=parseFloat(String(v||"").replace(",","."));return isNaN(n)?0:n}
+var mem=[];// respaldo si no hay almacenamiento
+
+function build(){
+  var h="<tr><th>Producto</th>"+COLS.map(function(c){return"<th>"+c[1]+"</th>"}).join("")+"<th>Total de producto</th></tr>";
+  $("#tbl thead").innerHTML=h;
+  var b="";
+  SECS.forEach(function(s,si){
+    b+='<tr class="sec"><td colspan="'+(COLS.length+2)+'">'+s[0]+"</td></tr>";
+    s[1].forEach(function(n,ri){
+      var id=si+"-"+ri,extra=s[0]==="Extras";
+      b+='<tr data-id="'+id+'">';
+      b+=extra?'<td class="name"><input data-f="name" placeholder="Producto extra" value="'+n.trim()+'"></td>':"<td>"+n+"</td>";
+      COLS.forEach(function(c){b+='<td><input data-f="'+c[0]+'" type="'+c[2]+'" '+(c[2]==="number"?'inputmode="decimal" step="any"':"")+(c[0]==="paq"?' value="'+(PACK[n.trim()]||1)+'"':"")+' aria-label="'+c[1]+'"></td>'});
+      b+='<td class="tot"><input data-f="total" type="text" inputmode="text" aria-label="Total de producto"></td></tr>';
+    });
+  });
+  $("#tbl tbody").innerHTML=b;
+}
+function totals(){
+  document.querySelectorAll("tr[data-id]").forEach(function(tr){
+    var g=function(f){return num(tr.querySelector('[data-f="'+f+'"]').value)};
+    var t=g("stock")+g("ing")*(g("paq")||1)+g("lit")+g("medio");
+    var td=tr.querySelector(".tot"),inp=td.querySelector("input");
+    if(tr.dataset.manual!=="1"){var l=g("lit"),m=g("medio");if((l||m)&&!g("stock")&&!g("ing")){inp.value=(l+Math.floor(m/2))+"/"+(m%2)}else{inp.value=Math.round(t*100)/100}}
+    td.classList.toggle("neg",num(inp.value)<0);
+  });
+}
+function collect(){
+  var rows={};
+  document.querySelectorAll("tr[data-id]").forEach(function(tr){
+    var o={};tr.querySelectorAll("input").forEach(function(i){o[i.dataset.f]=i.value});
+    o.manual=tr.dataset.manual||"";rows[tr.dataset.id]=o;
+  });
+  return{fecha:$("#fecha").value,enc:$("#enc").value,ob:$("#ob").value,rows:rows};
+}
+function fill(d){
+  $("#fecha").value=d.fecha||"";$("#enc").value=d.enc||"";$("#ob").value=d.ob||"";
+  document.querySelectorAll("tr[data-id]").forEach(function(tr){
+    var o=(d.rows||{})[tr.dataset.id]||{};tr.dataset.manual=o.manual||"";
+    tr.querySelectorAll("input").forEach(function(i){i.value=o[i.dataset.f]!=null?o[i.dataset.f]:(i.dataset.f==="name"||i.dataset.f==="paq"?i.value:"")});
+  });
+  totals();
+}
+function all(){return mem}
+window.setRegistros=function(l){mem=l;renderHist()};
+function rid(d){return d.fecha+"_"+d.enc.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-")}
+function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function fmt(f){if(!f)return"Sin fecha";var p=f.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
+function renderHist(){
+  var l=all(),el=$("#hist");
+  if(!l.length){el.innerHTML='<p class="empty">Todavía no hay registros. Llena la hoja y toca «Guardar registro».</p>';return}
+  el.innerHTML=l.map(function(r,i){return'<div class="item"><div><strong>'+fmt(r.fecha)+"</strong><small>"+(r.enc||"Sin encargado").replace(/</g,"&lt;")+'</small></div><div><button data-open="'+i+'">Abrir</button> <button class="d" data-del="'+i+'">Eliminar</button></div></div>'}).join("");
+}
+document.addEventListener("input",function(e){if(e.target.closest("#tbl")){var tr=e.target.closest("tr");if(e.target.dataset.f==="total"){tr.dataset.manual=e.target.value===""?"":"1"}totals()}store(CUR,collect())});
+$("#save").onclick=function(){
+  var d=collect();
+  if(!d.fecha){msg("Elige la fecha de cuenta antes de guardar.");$("#fecha").focus();return}
+  if(!d.enc.trim()){msg("Escribe el nombre del encargado antes de guardar.");$("#enc").focus();return}
+  if(!window.DB){msg("Falta conectar la base de datos. Revisa la configuraci\u00f3n de Firebase.");return}
+  d.id=rid(d);
+  if(all().some(function(r){return r.id===d.id})&&!confirm("Ya existe un registro de este encargado en esa fecha. \u00bfReemplazarlo?"))return;
+  window.DB.save(d).then(function(){msg("Registro guardado para todos.")},function(){msg("No se pudo guardar. Revisa la conexi\u00f3n.")});
+};
+$("#new").onclick=function(){if(!confirm("¿Empezar un registro nuevo? Se limpia la hoja actual."))return;fill({fecha:today()});store(CUR,collect())};
+$("#hist").onclick=function(e){
+  var o=e.target.dataset.open,d=e.target.dataset.del,l=all().slice();
+  if(o!=null){fill(l[o]);window.scrollTo({top:0,behavior:"smooth"})}
+  if(d!=null&&confirm("¿Eliminar este registro para todos?")&&window.DB){window.DB.del(l[d].id).then(function(){msg("Registro eliminado.")},function(){msg("No se pudo eliminar.")})}
+};
+$("#print").onclick=function(){window.print()};
+$("#csv").onclick=function(){
+  var d=collect(),head=["Fecha","Encargado","Producto"].concat(COLS.map(function(c){return c[1]}),["Total"]),out=[head];
+  var names=[];SECS.forEach(function(s,si){s[1].forEach(function(n,ri){names.push([si+"-"+ri,n])})});
+  names.forEach(function(p){var r=d.rows[p[0]];var nm=r.name!=null?r.name:p[1];if(r.name!=null&&!nm.trim())return;
+    out.push([d.fecha,d.enc,nm].concat(COLS.map(function(c){return r[c[0]]||""}),[r.total]))});
+  out.push([]);out.push(["OB",d.ob]);
+  var csv=out.map(function(r){return r.map(function(v){return'"'+String(v==null?"":v).replace(/"/g,'""')+'"'}).join(",")}).join("\n");
+  var a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv"}));a.download="inventario-"+(d.fecha||"sin-fecha")+".csv";document.body.appendChild(a);a.click();a.remove();
+};
+function pdfFile(){
+  var J=window.jspdf;if(!J)return null;
+  var d=collect(),doc=new J.jsPDF({orientation:"landscape",unit:"pt",format:"a4"});
+  doc.setFontSize(16);doc.text("Inventario diario",40,40);
+  doc.setFontSize(11);doc.text("Fecha de cuenta: "+fmt(d.fecha)+"    Encargado: "+(d.enc||"-"),40,60);
+  var body=[];
+  SECS.forEach(function(s,si){
+    body.push([{content:s[0],colSpan:COLS.length+2,styles:{fillColor:[214,226,245],fontStyle:"bold",textColor:20,halign:"left"}}]);
+    s[1].forEach(function(n,k){
+      var r=d.rows[si+"-"+k],nm=r.name!=null?r.name:n;
+      if(r.name!=null&&!nm.trim())return;
+      body.push([nm].concat(COLS.map(function(c){var v=r[c[0]]||"";return c[2]==="date"&&v?fmt(v):v}),[r.total||""]));
+    });
+  });
+  doc.autoTable({startY:72,head:[["Producto"].concat(COLS.map(function(c){return c[1]}),["Total"])],body:body,styles:{fontSize:9,halign:"center"},columnStyles:{0:{halign:"left",fontStyle:"bold"}},headStyles:{fillColor:[44,74,138]}});
+  var y=doc.lastAutoTable.finalY+18;
+  doc.setFontSize(10);doc.text(doc.splitTextToSize("OB: "+(d.ob||""),760),40,y);
+  return{blob:doc.output("blob"),name:"inventario-"+d.fecha+".pdf"};
+}
+function getPdf(){
+  if(!$("#fecha").value){msg("Elige la fecha de cuenta primero.");$("#fecha").focus();return null}
+  var f=pdfFile();if(!f)msg("No cargó el generador de PDF. Revisa tu conexión e intenta de nuevo.");
+  return f;
+}
+function savePdf(f){
+  var C=window.claude;if(!C||!C.use){var a=document.createElement("a");a.href=URL.createObjectURL(f.blob);a.download=f.name;document.body.appendChild(a);a.click();a.remove();msg("PDF listo.");return}
+  C.use("downloads").then(function(dl){
+    if(!dl){msg("Aquí no se puede descargar. Usa Imprimir y guarda como PDF.");return}
+    return dl.save({filename:f.name,data:f.blob}).then(function(){msg("PDF listo.")},function(e){if(!e||e.code!=="declined")msg("No se pudo guardar el PDF.")});
+  });
+}
+$("#pdf").onclick=function(){var f=getPdf();if(f)savePdf(f)};
+$("#wa").onclick=function(){
+  var f=getPdf();if(!f)return;
+  var file=new File([f.blob],f.name,{type:"application/pdf"});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:"Inventario "+fmt($("#fecha").value)}).catch(function(e){if(!e||e.name!=="AbortError")savePdf(f)});
+  }else{savePdf(f)}
+};
+build();
+fill(load(CUR)||{fecha:today()});
+if(!$("#fecha").value)$("#fecha").value=today();
+renderHist();
+</script>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getFirestore,collection,doc,setDoc,deleteDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+/* PEGA AQUÍ LA CONFIGURACIÓN DE TU PROYECTO DE FIREBASE (ver PASOS.md) */
+var firebaseConfig={apiKey:"AIzaSyAEV3tTFNdFCSw180ZzIUv044Uh-EXbdYY",authDomain:"inve-82228.firebaseapp.com",projectId:"inve-82228",storageBucket:"inve-82228.firebasestorage.app",messagingSenderId:"943880414879",appId:"1:943880414879:web:76f7e8df1fee63a53524aa"};
+var out=document.getElementById("msg");
+if(firebaseConfig.apiKey==="PEGA_AQUI"){out.textContent="Falta pegar la configuración de Firebase en index.html."}
+else{
+  var db=getFirestore(initializeApp(firebaseConfig));
+  window.DB={
+    save:function(d){d.actualizado=Date.now();return setDoc(doc(db,"registros",d.id),d)},
+    del:function(id){return deleteDoc(doc(db,"registros",id))}
+  };
+  onSnapshot(collection(db,"registros"),function(s){
+    var l=[];s.forEach(function(x){l.push(x.data())});
+    l.sort(function(a,b){return a.fecha<b.fecha?1:a.fecha>b.fecha?-1:(a.enc||"").localeCompare(b.enc||"")});
+    window.setRegistros(l);
+  },function(){window.setRegistros([]);out.textContent="No se pudo leer la base de datos. Revisa las reglas de Firebase."});
+}
+</script>
+</body>
+</html>
